@@ -7,6 +7,9 @@ fn window_conf() -> Conf {
     // Built by hand (not capture::capture_window_conf) to keep the game's
     // large default window size (2560x1440) while still forcing windowed
     // mode during capture so screenshots are deterministic.
+    // Hand-built Conf means no automatic arming: without this the capture run
+    // puts a full game window on the desktop for its whole duration.
+    capture::headless::arm("ECLIPSE_HEART");
     let capture_mode = capture::capture_requested("ECLIPSE_HEART");
     Conf {
         window_title: "Eclipse Heart".to_owned(),
