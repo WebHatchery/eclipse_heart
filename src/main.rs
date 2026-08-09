@@ -27,20 +27,22 @@ async fn main() {
 
     // Screenshot harness: when ECLIPSE_HEART_CAPTURE_PATH is set, seed a
     // scene, simulate deterministic frames, write a PNG, and exit.
-    if let Some(mut config) = capture::CaptureConfig::from_env("ECLIPSE_HEART") {
-        config.frames = capture::env_u32("ECLIPSE_HEART_CAPTURE_FRAMES", 8).max(1);
-        assert!(
-            game.prepare_capture_screen(&config.scene),
-            "unknown capture screen: {}",
-            config.scene
-        );
-        capture::run_capture(&config, |_dt| {
-            show_mouse(true);
-            clear_background(ui::core::BACKGROUND);
-            game.update_for_capture();
-            game.draw();
-        })
-        .await;
+    if let Some(configs) = capture::CaptureConfig::all_from_env("ECLIPSE_HEART") {
+        for mut config in configs {
+            config.frames = capture::env_u32("ECLIPSE_HEART_CAPTURE_FRAMES", 8).max(1);
+            assert!(
+                game.prepare_capture_screen(&config.scene),
+                "unknown capture screen: {}",
+                config.scene
+            );
+            capture::run_capture_once(&config, |_dt| {
+                show_mouse(true);
+                clear_background(ui::core::BACKGROUND);
+                game.update_for_capture();
+                game.draw();
+            })
+            .await;
+        }
         return;
     }
 
