@@ -1,5 +1,5 @@
 use crate::state::{AppState, DeckCodeError};
-use macroquad_toolkit::ui::measure_ui_text;
+use macroquad_toolkit::ui::wrap_text;
 
 pub(super) fn wrap_preview_text(
     text: &str,
@@ -7,42 +7,10 @@ pub(super) fn wrap_preview_text(
     font_size: f32,
     max_lines: usize,
 ) -> Vec<String> {
-    let mut wrapped = Vec::new();
-    let mut current = String::new();
-    let words = text.split_whitespace().collect::<Vec<_>>();
-    let mut index = 0;
-
-    while index < words.len() {
-        let word = words[index];
-        let candidate = if current.is_empty() {
-            word.to_owned()
-        } else {
-            format!("{current} {word}")
-        };
-
-        if measure_ui_text(&candidate, None, font_size as u16, 1.0).width <= max_width {
-            current = candidate;
-            index += 1;
-            continue;
-        }
-
-        if !current.is_empty() {
-            wrapped.push(current);
-        }
-        if wrapped.len() + 1 == max_lines {
-            let remaining = words[index..].join(" ");
-            wrapped.push(remaining);
-            return wrapped;
-        }
-        current = word.to_owned();
-        index += 1;
-    }
-
-    if !current.is_empty() && wrapped.len() < max_lines {
-        wrapped.push(current);
-    }
-
-    wrapped
+    wrap_text(text, max_width, font_size)
+        .into_iter()
+        .take(max_lines)
+        .collect()
 }
 
 pub(super) fn wrap_text_block(

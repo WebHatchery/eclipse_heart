@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use serde::de::DeserializeOwned;
+use macroquad_toolkit::data_loader::load_json_file_sync;
 use thiserror::Error;
 
 use crate::data::{
@@ -19,6 +19,12 @@ pub enum LoadError {
     Json(#[from] serde_json::Error),
     #[error("failed to load asset: {0}")]
     Asset(String),
+}
+
+impl From<String> for LoadError {
+    fn from(message: String) -> Self {
+        Self::Asset(message)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -63,28 +69,32 @@ impl Default for GameContent {
 
 impl GameContent {
     pub fn load() -> Result<Self, LoadError> {
-        let magical_girls = load_json::<Vec<CharacterDefinition>>(asset_path(
+        let magical_girls = load_json_file_sync::<Vec<CharacterDefinition>>(asset_path(
             "assets/data/magical_girls/prototype_set.json",
         ))?;
-        let baddies = load_json::<Vec<CharacterDefinition>>(asset_path(
+        let baddies = load_json_file_sync::<Vec<CharacterDefinition>>(asset_path(
             "assets/data/baddies/prototype_set.json",
         ))?;
-        let story_cards = load_json::<Vec<StoryCardDefinition>>(asset_path(
+        let story_cards = load_json_file_sync::<Vec<StoryCardDefinition>>(asset_path(
             "assets/data/story_cards/prototype_set.json",
         ))?;
-        let rules = load_json::<MatchRules>(asset_path("assets/data/rules/match_rules.json"))?;
-        let deck_rules = load_json::<DeckRules>(asset_path("assets/data/rules/deck_rules.json"))?;
-        let progression_rules =
-            load_json::<ProgressionRules>(asset_path("assets/data/rules/progression_rules.json"))?;
-        let starter_loadouts = load_json::<Vec<StarterLoadout>>(asset_path(
+        let rules =
+            load_json_file_sync::<MatchRules>(asset_path("assets/data/rules/match_rules.json"))?;
+        let deck_rules =
+            load_json_file_sync::<DeckRules>(asset_path("assets/data/rules/deck_rules.json"))?;
+        let progression_rules = load_json_file_sync::<ProgressionRules>(asset_path(
+            "assets/data/rules/progression_rules.json",
+        ))?;
+        let starter_loadouts = load_json_file_sync::<Vec<StarterLoadout>>(asset_path(
             "assets/data/starter_loadouts/prototype_starters.json",
         ))?;
-        let campaign = load_json::<CampaignDefinition>(asset_path(
+        let campaign = load_json_file_sync::<CampaignDefinition>(asset_path(
             "assets/data/campaigns/magical_girl_campaign.json",
         ))?;
         let card_visuals =
-            load_json::<CardVisualSpec>(asset_path("assets/data/card_visuals.json"))?;
-        let art_catalog = load_json::<ArtCatalog>(asset_path("assets/data/art_catalog.json"))?;
+            load_json_file_sync::<CardVisualSpec>(asset_path("assets/data/card_visuals.json"))?;
+        let art_catalog =
+            load_json_file_sync::<ArtCatalog>(asset_path("assets/data/art_catalog.json"))?;
         Ok(Self {
             magical_girls,
             baddies,
@@ -100,82 +110,90 @@ impl GameContent {
     }
 
     pub async fn load_async() -> Result<Self, LoadError> {
-        let magical_girls = load_json_async::<Vec<CharacterDefinition>>(
-            "assets/data/magical_girls/prototype_set.json",
-        )
-        .await?;
-        let baddies =
-            load_json_async::<Vec<CharacterDefinition>>("assets/data/baddies/prototype_set.json")
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::load()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let magical_girls = macroquad_toolkit::data_loader::load_json_file::<
+                Vec<CharacterDefinition>,
+            >("assets/data/magical_girls/prototype_set.json")
+            .await?;
+            let baddies =
+                macroquad_toolkit::data_loader::load_json_file::<Vec<CharacterDefinition>>(
+                    "assets/data/baddies/prototype_set.json",
+                )
                 .await?;
-        let story_cards = load_json_async::<Vec<StoryCardDefinition>>(
-            "assets/data/story_cards/prototype_set.json",
-        )
-        .await?;
-        let rules = load_json_async::<MatchRules>("assets/data/rules/match_rules.json").await?;
-        let deck_rules = load_json_async::<DeckRules>("assets/data/rules/deck_rules.json").await?;
-        let progression_rules =
-            load_json_async::<ProgressionRules>("assets/data/rules/progression_rules.json").await?;
-        let starter_loadouts = load_json_async::<Vec<StarterLoadout>>(
-            "assets/data/starter_loadouts/prototype_starters.json",
-        )
-        .await?;
-        let campaign = load_json_async::<CampaignDefinition>(
-            "assets/data/campaigns/magical_girl_campaign.json",
-        )
-        .await?;
-        let card_visuals =
-            load_json_async::<CardVisualSpec>("assets/data/card_visuals.json").await?;
-        let art_catalog = load_json_async::<ArtCatalog>("assets/data/art_catalog.json").await?;
-        Ok(Self {
-            magical_girls,
-            baddies,
-            story_cards,
-            rules,
-            deck_rules,
-            progression_rules,
-            starter_loadouts,
-            campaign,
-            card_visuals,
-            art_catalog,
-        })
+            let story_cards = macroquad_toolkit::data_loader::load_json_file::<
+                Vec<StoryCardDefinition>,
+            >("assets/data/story_cards/prototype_set.json")
+            .await?;
+            let rules = macroquad_toolkit::data_loader::load_json_file::<MatchRules>(
+                "assets/data/rules/match_rules.json",
+            )
+            .await?;
+            let deck_rules = macroquad_toolkit::data_loader::load_json_file::<DeckRules>(
+                "assets/data/rules/deck_rules.json",
+            )
+            .await?;
+            let progression_rules = macroquad_toolkit::data_loader::load_json_file::<
+                ProgressionRules,
+            >("assets/data/rules/progression_rules.json")
+            .await?;
+            let starter_loadouts =
+                macroquad_toolkit::data_loader::load_json_file::<Vec<StarterLoadout>>(
+                    "assets/data/starter_loadouts/prototype_starters.json",
+                )
+                .await?;
+            let campaign = macroquad_toolkit::data_loader::load_json_file::<CampaignDefinition>(
+                "assets/data/campaigns/magical_girl_campaign.json",
+            )
+            .await?;
+            let card_visuals = macroquad_toolkit::data_loader::load_json_file::<CardVisualSpec>(
+                "assets/data/card_visuals.json",
+            )
+            .await?;
+            let art_catalog = macroquad_toolkit::data_loader::load_json_file::<ArtCatalog>(
+                "assets/data/art_catalog.json",
+            )
+            .await?;
+            Ok(Self {
+                magical_girls,
+                baddies,
+                story_cards,
+                rules,
+                deck_rules,
+                progression_rules,
+                starter_loadouts,
+                campaign,
+                card_visuals,
+                art_catalog,
+            })
+        }
     }
 }
 
 impl UiText {
     pub fn load() -> Result<Self, LoadError> {
-        let values = load_json::<HashMap<String, String>>(asset_path("assets/data/ui_text.json"))?;
+        let values =
+            load_json_file_sync::<HashMap<String, String>>(asset_path("assets/data/ui_text.json"))?;
         Ok(Self { values })
     }
 
     pub async fn load_async() -> Result<Self, LoadError> {
-        let values = load_json_async::<HashMap<String, String>>("assets/data/ui_text.json").await?;
-        Ok(Self { values })
-    }
-}
-
-fn load_json<T>(path: PathBuf) -> Result<T, LoadError>
-where
-    T: DeserializeOwned,
-{
-    let text = std::fs::read_to_string(path)?;
-    let value = serde_json::from_str::<T>(&text)?;
-    Ok(value)
-}
-
-async fn load_json_async<T>(relative_path: &str) -> Result<T, LoadError>
-where
-    T: DeserializeOwned,
-{
-    #[cfg(target_arch = "wasm32")]
-    {
-        macroquad_toolkit::data_loader::load_json_file(relative_path)
-            .await
-            .map_err(LoadError::Asset)
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        load_json(asset_path(relative_path))
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::load()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let values = macroquad_toolkit::data_loader::load_json_file::<HashMap<String, String>>(
+                "assets/data/ui_text.json",
+            )
+            .await?;
+            Ok(Self { values })
+        }
     }
 }
 

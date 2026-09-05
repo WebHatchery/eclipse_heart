@@ -11,7 +11,7 @@ use crate::ui::core::{
     MG_BLUE, PRIORITY_GOLD, TEXT_MUTED,
 };
 use crate::ui::layout::UiLayout;
-use macroquad_toolkit::ui::draw_ui_text;
+use macroquad_toolkit::ui::{draw_ui_text, wrap_text};
 
 pub struct CampaignHubScreen;
 
@@ -361,7 +361,7 @@ impl CampaignHubScreen {
             ui.font(56.0),
             WHITE,
         );
-        for (index, line) in wrap_line(&encounter.intro_text, 74)
+        for (index, line) in wrap_text(&encounter.intro_text, rect.w - ui.w(84.0), ui.font(24.0))
             .into_iter()
             .take(2)
             .enumerate()
@@ -473,28 +473,4 @@ fn format_story_cards(card_ids: &[String], definitions: &[StoryCardDefinition]) 
         })
         .collect::<Vec<_>>()
         .join(", ")
-}
-
-fn wrap_line(text: &str, max_chars: usize) -> Vec<String> {
-    let mut lines = Vec::new();
-    let mut current = String::new();
-    for word in text.split_whitespace() {
-        let candidate = if current.is_empty() {
-            word.to_owned()
-        } else {
-            format!("{current} {word}")
-        };
-        if candidate.chars().count() <= max_chars {
-            current = candidate;
-        } else {
-            if !current.is_empty() {
-                lines.push(current);
-            }
-            current = word.to_owned();
-        }
-    }
-    if !current.is_empty() {
-        lines.push(current);
-    }
-    lines
 }

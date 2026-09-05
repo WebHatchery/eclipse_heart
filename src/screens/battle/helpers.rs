@@ -6,7 +6,7 @@ use crate::state::{
 use crate::ui::core::{draw_button_frame, TEXT_MUTED};
 use crate::ui::layout::UiLayout;
 use macroquad_toolkit::colors::with_alpha;
-use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
+use macroquad_toolkit::ui::{draw_ui_text, wrap_text};
 
 pub(super) fn can_reveal_side(
     match_state: &MatchState,
@@ -120,31 +120,10 @@ pub(super) fn campaign_encounter_name(state: &AppState) -> String {
 }
 
 pub(super) fn wrap_event_lines(events: &[String], max_width: f32, font_size: f32) -> Vec<String> {
-    let mut wrapped = Vec::new();
-
-    for event in events {
-        let mut current = String::new();
-        for word in event.split_whitespace() {
-            let candidate = if current.is_empty() {
-                word.to_owned()
-            } else {
-                format!("{current} {word}")
-            };
-            if measure_ui_text(&candidate, None, font_size as u16, 1.0).width <= max_width {
-                current = candidate;
-            } else {
-                if !current.is_empty() {
-                    wrapped.push(current);
-                }
-                current = word.to_owned();
-            }
-        }
-        if !current.is_empty() {
-            wrapped.push(current);
-        }
-    }
-
-    wrapped
+    events
+        .iter()
+        .flat_map(|event| wrap_text(event, max_width, font_size))
+        .collect()
 }
 
 pub(super) fn hand_card_rects(card_count: usize) -> Vec<Rect> {
